@@ -67,16 +67,17 @@ Because of long run time in making the model, the last part is cached. Here is t
 ```{r,results='markup'}
 model
 ```
+The model looks conviencible with __OOB estimate of error rate being 0.47%__
 
 Cross Validation
 ```{r}
 CroVal <- predict(model, crossValidation)
 confusionMatrix(crossValidation$classe,CroVal)
 ```
-Here from the confusion matrix, we can see that we did a good job on cross validation with 99.49% accuracy.
+Here from the confusion matrix, we can see that we did a good job on cross validation with __99.52% accuracy__.
 
 #### Prediction
-Then we use the model we just built to run with testing data set. This is a general prediction, not for Coursera Submission. The next part will detail the submission part
+Then we use the model we just built to run with testing data set. This is a general prediction, not for Coursera Submission. The next part will detail the submission part. 
 ```{r}
 ## Remove some part of test data for submission
 ## The last row is problem_id, not a predictor

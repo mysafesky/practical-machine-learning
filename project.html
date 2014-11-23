@@ -83,7 +83,9 @@ set.seed(1024)</code></pre>
 data_test &lt;- read.csv(&quot;pml-testing.csv&quot;, na.strings= c(&quot;NA&quot;,&quot;&quot;,&quot; &quot;,&quot;#DIV/0!&quot;))</code></pre>
 <p>Pre-processing data, removing rows with NA.</p>
 <pre class="r"><code>data_train &lt;- data_train[,colSums(is.na(data_train))==0]
-data_test &lt;- data_test[,colSums(is.na(data_test))==0]</code></pre>
+data_test &lt;- data_test[,colSums(is.na(data_test))==0]
+data_train &lt;- data_train[,-c(1:7)]
+data_test &lt;- data_test[,-c(1:7)]</code></pre>
 </div>
 <div id="model-building" class="section level4">
 <h4>Model building</h4>
@@ -92,8 +94,8 @@ data_test &lt;- data_test[,colSums(is.na(data_test))==0]</code></pre>
 training &lt;- data_train[inTrain,]
 crossValidation &lt;- data_train[-inTrain,]
 dim(training);dim(crossValidation)</code></pre>
-<pre><code>## [1] 13737    60</code></pre>
-<pre><code>## [1] 5885   60</code></pre>
+<pre><code>## [1] 13737    53</code></pre>
+<pre><code>## [1] 5885   53</code></pre>
 <p>Build the model</p>
 <pre class="r"><code>model &lt;- randomForest(classe ~., data = training)</code></pre>
 <p>Because of long run time in making the model, the last part is cached. Here is the built model.</p>
@@ -105,14 +107,14 @@ dim(training);dim(crossValidation)</code></pre>
 ##                      Number of trees: 500
 ## No. of variables tried at each split: 7
 ## 
-##         OOB estimate of  error rate: 0.01%
+##         OOB estimate of  error rate: 0.47%
 ## Confusion matrix:
 ##      A    B    C    D    E  class.error
-## A 3906    0    0    0    0 0.0000000000
-## B    0 2658    0    0    0 0.0000000000
-## C    0    1 2395    0    0 0.0004173623
-## D    0    0    0 2252    0 0.0000000000
-## E    0    0    0    0 2525 0.0000000000</code></pre>
+## A 3904    1    0    0    1 0.0005120328
+## B   10 2644    4    0    0 0.0052671181
+## C    0   15 2377    4    0 0.0079298831
+## D    0    0   21 2230    1 0.0097690941
+## E    0    0    2    6 2517 0.0031683168</code></pre>
 <p>Cross Validation</p>
 <pre class="r"><code>CroVal &lt;- predict(model, crossValidation)
 confusionMatrix(crossValidation$classe,CroVal)</code></pre>
@@ -120,33 +122,58 @@ confusionMatrix(crossValidation$classe,CroVal)</code></pre>
 ## 
 ##           Reference
 ## Prediction    A    B    C    D    E
-##          A 1674    0    0    0    0
-##          B    0 1139    0    0    0
-##          C    0    0 1026    0    0
-##          D    0    0    0  964    0
+##          A 1672    2    0    0    0
+##          B    7 1132    0    0    0
+##          C    0    7 1019    0    0
+##          D    0    0    9  952    3
 ##          E    0    0    0    0 1082
 ## 
 ## Overall Statistics
-##                                      
-##                Accuracy : 1          
-##                  95% CI : (0.9994, 1)
-##     No Information Rate : 0.2845     
-##     P-Value [Acc &gt; NIR] : &lt; 2.2e-16  
-##                                      
-##                   Kappa : 1          
-##  Mcnemar's Test P-Value : NA         
+##                                           
+##                Accuracy : 0.9952          
+##                  95% CI : (0.9931, 0.9968)
+##     No Information Rate : 0.2853          
+##     P-Value [Acc &gt; NIR] : &lt; 2.2e-16       
+##                                           
+##                   Kappa : 0.994           
+##  Mcnemar's Test P-Value : NA              
 ## 
 ## Statistics by Class:
 ## 
 ##                      Class: A Class: B Class: C Class: D Class: E
-## Sensitivity            1.0000   1.0000   1.0000   1.0000   1.0000
-## Specificity            1.0000   1.0000   1.0000   1.0000   1.0000
-## Pos Pred Value         1.0000   1.0000   1.0000   1.0000   1.0000
-## Neg Pred Value         1.0000   1.0000   1.0000   1.0000   1.0000
-## Prevalence             0.2845   0.1935   0.1743   0.1638   0.1839
-## Detection Rate         0.2845   0.1935   0.1743   0.1638   0.1839
+## Sensitivity            0.9958   0.9921   0.9912   1.0000   0.9972
+## Specificity            0.9995   0.9985   0.9986   0.9976   1.0000
+## Pos Pred Value         0.9988   0.9939   0.9932   0.9876   1.0000
+## Neg Pred Value         0.9983   0.9981   0.9981   1.0000   0.9994
+## Prevalence             0.2853   0.1939   0.1747   0.1618   0.1844
+## Detection Rate         0.2841   0.1924   0.1732   0.1618   0.1839
 ## Detection Prevalence   0.2845   0.1935   0.1743   0.1638   0.1839
-## Balanced Accuracy      1.0000   1.0000   1.0000   1.0000   1.0000</code></pre>
+## Balanced Accuracy      0.9977   0.9953   0.9949   0.9988   0.9986</code></pre>
+<p>Here from the confusion matrix, we can see that we did a good job on cross validation with 99.49% accuracy.</p>
+</div>
+<div id="prediction" class="section level4">
+<h4>Prediction</h4>
+<p>Then we use the model we just built to run with testing data set. This is a general prediction, not for Coursera Submission. The next part will detail the submission part.</p>
+<pre class="r"><code>## Remove some part of test data for submission
+## The last row is problem_id, not a predictor
+data_test_n &lt;- data_test[1:length(data_test)-1]
+pred_result &lt;- predict(model, data_test_n)
+pred_result</code></pre>
+<pre><code>##  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 
+##  B  A  B  A  A  E  D  B  A  A  B  C  B  A  E  E  A  B  B  B 
+## Levels: A B C D E</code></pre>
+</div>
+<div id="cousera-submission" class="section level4">
+<h4>Cousera Submission</h4>
+<pre class="r"><code>pml_write_files = function(x){
+  n = length(x)
+  for(i in 1:n){
+    filename = paste0(&quot;problem_id_&quot;,i,&quot;.txt&quot;)
+    write.table(x[i],file=filename,quote=FALSE,row.names=FALSE,col.names=FALSE)
+  }
+}
+
+pml_write_files(pred_result)</code></pre>
 </div>
 </div>
 
